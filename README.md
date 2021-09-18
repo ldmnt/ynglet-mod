@@ -23,15 +23,15 @@ The symbols for the game executable were generated with
 
 ### Binary release
 
-Download the latest release from the release page. Verify that the zip file
-was not tampered with, for instance in a powershell:
+Go to the Release page and download `ynglet-mod.zip` from the latest version. 
+Verify that the zip file was not tampered with, for instance in a powershell:
 ```bash
 Get-FileHash path/to/ynglet-mod.zip -Algorithm MD5
 ```
 Make sure that the output matches the hash in the release’s description,
 then extract the contents somewhere.
-The extracted executable and dll file can be placed anywhere as long
-as they are both in the same directory.
+The mod is made of an executable YngletMod.exe and a DLL file IL2CppDLL.dll.
+They can be placed anywhere as long as they are both in the same directory.
 
 ### From source
 
@@ -43,7 +43,12 @@ IL2CppDLL.dll anywhere, as long as they are in the same folder.
 
 ## Usage
 
-Run Ynglet.exe as administrator, this starts a console and waits for the game to
+Run YngletMod.exe as administrator, this starts a console and waits for the game to
 be launched. Once the game is started (or directly if the game was already running),
-A console opens and displays some information, including whether the mod is
-currently active or not, which means that the mod was attached successfully.
+The console closes and another one opens and displays some information, including whether the mod 
+is currently active or not, which means that the mod was attached successfully.
+
+Note that even when the mod is disabled, it still slightly affects the game
+behavior. I had to remove some effects that are not very visible in order
+to make the hack work properly. You need to do a full restart of the game
+to get it to run without any modification again.
