@@ -23,14 +23,23 @@ The symbols for the game executable were generated with
 
 ### Binary release
 
-Download the latest release from the release page and extract the contents somewhere.
-The executable and the dll file must remain in the same directory.
+Download the latest release from the release page. Verify that the zip file
+was not tampered with, for instance in a powershell:
+```bash
+Get-FileHash path/to/ynglet-mod.zip -Algorithm MD5
+```
+Make sure that the output matches the hash in the release’s description,
+then extract the contents somewhere.
+The extracted executable and dll file can be placed anywhere as long
+as they are both in the same directory.
 
 ### From source
 
 The project is compiled with msbuild. For instance, open the .sln file with
 [Visual Studio](https://visualstudio.microsoft.com/),
 then select the Release - x64 target and click Build -> Build Solution.
+Open the build folder (x64/Release) and copy the two files Ynglet.exe and
+IL2CppDLL.dll anywhere, as long as they are in the same folder.
 
 ## Usage
 
