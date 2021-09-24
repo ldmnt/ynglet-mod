@@ -12,6 +12,8 @@
 using namespace app;
 
 bool hackActive = true;
+bool requestedReload = false;
+int32_t currentScene;
 
 const BYTE jumpTemplate[] = { 0x49, 0xbb, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x41, 0xff, 0xe3 };
 const int jumpTemplateSize = 13;
@@ -21,12 +23,29 @@ const BYTE shortJumpTemplateSize = 2;
 typedef void(__fastcall* spawnFunction)(ShardSpawner*, ShardSpawner_SpawnSound__Enum, MethodInfo*);
 typedef bool(__fastcall* onCollectFunction)(Triangle*, MethodInfo*);
 typedef void(__fastcall* onSceneLoadedFunction)(PersistentManager*, Scene, LoadSceneMode__Enum, MethodInfo*);
+typedef void(__fastcall* updateFunction)(PersistentManager*, MethodInfo*);
+typedef void(__fastcall* onLevelLoadedFunction)(SpeedrunManager*, int32_t, MethodInfo*);
 spawnFunction ShardSpawner_Spawn_Trampoline;
 onCollectFunction Triangle_OnCollect_Trampoline;
 onSceneLoadedFunction PersistentManager_OnSceneLoaded_Trampoline;
+updateFunction PersistentManager_Update_Trampoline;
+onLevelLoadedFunction SpeedrunManager_OnLevelLoaded_Trampoline;
 
 std::unordered_map<PlayObjectBase*, std::vector<Shard*>> shardsOfTriangle;
 std::unordered_map<Shard*, PlayObjectBase*> triangleOfShard;
+
+void __fastcall SpeedrunManager_OnLevelLoaded_Modified(SpeedrunManager* __this, int32_t sceneIndex, MethodInfo* method) {
+  currentScene = sceneIndex;
+  SpeedrunManager_OnLevelLoaded_Trampoline(__this, sceneIndex, method);
+}
+
+void __fastcall PersistentManager_Update_Modified(PersistentManager* __this, MethodInfo* method) {
+  if (requestedReload) {
+    requestedReload = false;
+    SceneManager_LoadScene(currentScene, NULL);
+  }
+  PersistentManager_Update_Trampoline(__this, method);
+}
 
 void __fastcall ShardSpawner_Spawn_Modified(ShardSpawner* __this, ShardSpawner_SpawnSound__Enum spawnSound, MethodInfo* method) {
   if (hackActive) {
@@ -190,7 +209,7 @@ void UpdateConsole() {
   SetConsoleCursorPosition(hConsole, coordScreen);
 
   // display info
-  std::cout << "Press [DEL] to toggle auto-respawn on/off\n\n"
+  std::cout << "Press [DEL] to toggle auto-respawn on/off, [END] to restart level.\n\n"
     << "Closing this console will close the game too.\n"
     << "When closing the game, the game will not actually exit until the console has been closed too.\n\n"
     << "************************************\n\n" << std::endl
@@ -222,6 +241,8 @@ void Run()
   ShardSpawner_Spawn_Trampoline = (spawnFunction)Trampoline((BYTE*)ShardSpawner_Spawn, (BYTE*)ShardSpawner_Spawn_Modified, 16);
   Triangle_OnCollect_Trampoline = (onCollectFunction)TriangleOnCollectTrampoline((BYTE*)Triangle_OnCollect, (BYTE*)Triangle_OnCollect_Modified);
   PersistentManager_OnSceneLoaded_Trampoline = (onSceneLoadedFunction)Trampoline((BYTE*)PersistentManager_OnSceneLoaded, (BYTE*)PersistentManager_OnSceneLoaded_Modified, 14);
+  PersistentManager_Update_Trampoline = (updateFunction)Trampoline((BYTE*)PersistentManager_Update, (BYTE*)PersistentManager_Update_Modified, 16);
+  SpeedrunManager_OnLevelLoaded_Trampoline = (onLevelLoadedFunction)Trampoline((BYTE*)SpeedrunManager_OnLevelLoaded, (BYTE*)SpeedrunManager_OnLevelLoaded_Modified, 14);
 
   // replace call to YngletPlayer_get_isInsideBubble by our own function
   EraseWithNop(baseAddress + 0x80eebc, 13); // erase test and jump after the call, will replace manually
@@ -237,6 +258,10 @@ void Run()
     if (GetAsyncKeyState(VK_DELETE)) {
       hackActive = !hackActive;
       UpdateConsole();
+      Sleep(200);
+    }
+    if (GetAsyncKeyState(VK_END)) {
+      requestedReload = true;
       Sleep(200);
     }
     Sleep(30);
